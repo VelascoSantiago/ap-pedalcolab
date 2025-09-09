@@ -1,60 +1,29 @@
+
 # server.py
-from flask import Flask, request, render_template_string, send_from_directory
+from flask import Flask, request, render_template, send_from_directory, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
-# Importamos nuestro motor de efectos
-from effects import procesar_audio
+# Importamos nuestro motor de efectos desde el nuevo archivo daw-app.py
+from daw-app import procesar_audio
 from pedalboard import Distortion, Chorus, Reverb, Delay, Compressor
 
 # --- Configuración de carpetas ---
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "proyecto", "audio_raw")
-OUTPUT_FOLDER = os.path.join(os.getcwd(), "proyecto", "audio_fx")
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "audio_raw")
+OUTPUT_FOLDER = os.path.join(os.getcwd(), "audio_fx")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
-# --- HTML ---
-UPLOAD_FORM = """
-<!doctype html>
-<title>Pedalera Digital</title>
-<h1>Subir archivo de audio</h1>
-<form method=post enctype=multipart/form-data action="/upload">
-  <input type=file name=file required>
-  <input type=submit value="Subir">
-</form>
-
-{% if filename %}
-<hr>
-<h2>Aplicar efectos a {{ filename }}</h2>
-<form method=post action="/procesar/{{ filename }}">
-  <label>Distorsión:</label>
-  <input type=range name=dist value=0 min=0 max=1 step=0.1><br>
-
-  <label>Chorus:</label>
-  <input type=range name=chorus value=0 min=0 max=1 step=0.1><br>
-
-  <label>Reverb:</label>
-  <input type=range name=reverb value=0 min=0 max=1 step=0.1><br>
-
-  <label>Delay:</label>
-  <input type=range name=delay value=0 min=0 max=1 step=0.1><br>
-
-  <label>Compresor:</label>
-  <input type=range name=comp value=0 min=0 max=1 step=0.1><br>
-
-  <input type=submit value="Procesar">
-</form>
-{% endif %}
-"""
-
 @app.route('/', methods=['GET'])
 def index():
-    return render_template_string(UPLOAD_FORM)
+    # Esta ruta ahora muestra la lista de archivos ya subidos
+    tracks = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template('ui-app.html', tracks=tracks)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -67,46 +36,52 @@ def upload_file():
     save_name = f"{timestamp}_{filename}"
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_name))
 
-    return render_template_string(UPLOAD_FORM, filename=save_name)
+    # Redirige a la página principal para mostrar la lista de archivos actualizada
+    return redirect(url_for('index'))
 
-@app.route('/procesar/<filename>', methods=['POST'])
-def procesar(filename):
-    input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    output_name = f"fx_{filename}"
-    output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_name)
+@app.route('/process/<filename>', methods=['GET', 'POST'])
+def process_track(filename):
+    tracks = os.listdir(app.config['UPLOAD_FOLDER'])
+    
+    if request.method == 'GET':
+        return render_template('ui-app.html', tracks=tracks, selected_track=filename)
 
-    # Tomar valores de los sliders
-    dist = float(request.form.get("dist", 0))
-    chorus = float(request.form.get("chorus", 0))
-    reverb = float(request.form.get("reverb", 0))
-    delay = float(request.form.get("delay", 0))
-    comp = float(request.form.get("comp", 0))
+    elif request.method == 'POST':
+        input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        output_name = f"fx_{filename}"
+        output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_name)
 
-    efectos = []
-    if dist > 0:
-        efectos.append(Distortion(drive_db=dist * 30))
-    if chorus > 0:
-        efectos.append(Chorus(rate_hz=1.5, depth=chorus))
-    if reverb > 0:
-        efectos.append(Reverb(room_size=reverb))
-    if delay > 0:
-        efectos.append(Delay(delay_seconds=delay, feedback=0.3))
-    if comp > 0:
-        efectos.append(Compressor(threshold_db=-20, ratio=1 + comp*4))
+        # Tomar valores de los sliders
+        dist = float(request.form.get("dist", 0))
+        chorus = float(request.form.get("chorus", 0))
+        reverb = float(request.form.get("reverb", 0))
+        delay = float(request.form.get("delay", 0))
+        comp = float(request.form.get("comp", 0))
 
-    procesar_audio(input_path, output_path, efectos)
+        efectos = []
+        if dist > 0:
+            efectos.append(Distortion(drive_db=dist * 30))
+        if chorus > 0:
+            efectos.append(Chorus(rate_hz=1.5, depth=chorus))
+        if reverb > 0:
+            efectos.append(Reverb(room_size=reverb))
+        if delay > 0:
+            efectos.append(Delay(delay_seconds=delay, feedback=0.3))
+        if comp > 0:
+            efectos.append(Compressor(threshold_db=-20, ratio=1 + comp*4))
 
-    return f"""
-    <h2>Procesado listo</h2>
-    <audio controls>
-      <source src="/download/{output_name}" type="audio/wav">
-      Tu navegador no soporta audio.
-    </audio>
-    <br><a href="/download/{output_name}">Descargar</a>
-    """
+        # Llama a la función de la daw-app para procesar el audio
+        procesar_audio(input_path, output_path, efectos) 
 
-@app.route('/download/<filename>')
-def download(filename):
+        return render_template('ui-app.html', tracks=tracks, processed_track=output_name)
+
+
+@app.route('/download/raw/<filename>')
+def download_raw(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/download/fx/<filename>')
+def download_fx(filename):
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 if __name__ == "__main__":

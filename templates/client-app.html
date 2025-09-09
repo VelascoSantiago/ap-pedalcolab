@@ -1,0 +1,58 @@
+<!doctype html>
+<title>Pedalera Digital Colaborativa</title>
+<h1>Subir y procesar tu pista</h1>
+
+<form method=post enctype=multipart/form-data action="/upload">
+  <input type=file name=file required>
+  <input type=submit value="Subir Pista">
+</form>
+
+<hr>
+
+{% if tracks %}
+<h2>Pistas disponibles</h2>
+<ul>
+  {% for track in tracks %}
+    <li>
+      {{ track }}
+      <audio controls src="/download/raw/{{ track }}"></audio>
+      <a href="/process/{{ track }}">Procesar con efectos</a>
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if selected_track %}
+<hr>
+<h2>Aplicar efectos a {{ selected_track }}</h2>
+<form method=post action="/process/{{ selected_track }}">
+  <label>Distorsión:</label>
+  <input type=range name=dist value=0 min=0 max=1 step=0.1><br>
+
+  <label>Chorus:</label>
+  <input type=range name=chorus value=0 min=0 max=1 step=0.1><br>
+
+  <label>Reverb:</label>
+  <input type=range name=reverb value=0 min=0 max=1 step=0.1><br>
+
+  <label>Delay:</label>
+  <input type=range name=delay value=0 min=0 max=1 step=0.1><br>
+
+  <label>Compresor:</label>
+  <input type=range name=comp value=0 min=0 max=1 step=0.1><br>
+
+  <input type=submit value="Aplicar y Escuchar">
+</form>
+
+<hr>
+{% endif %}
+
+{% if processed_track %}
+<h2>Resultado Procesado</h2>
+<audio controls>
+  <source src="/download/fx/{{ processed_track }}" type="audio/wav">
+  Tu navegador no soporta audio.
+</audio>
+<br>
+<a href="/download/fx/{{ processed_track }}">Descargar</a>
+{% endif %}

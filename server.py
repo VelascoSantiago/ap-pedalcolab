@@ -1,88 +1,118 @@
-
 # server.py
 from flask import Flask, request, render_template, send_from_directory, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
-# Importamos nuestro motor de efectos desde el nuevo archivo daw-app.py
-from daw-app import procesar_audio
+# Asumimos que daw_app.py está en el mismo directorio
+from daw_app import procesar_audio
 from pedalboard import Distortion, Chorus, Reverb, Delay, Compressor
 
 # --- Configuración de carpetas ---
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "audio_raw")
-OUTPUT_FOLDER = os.path.join(os.getcwd(), "audio_fx")
+# Obtenemos la ruta absoluta del directorio del script para evitar problemas
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "audio_raw")
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "audio_fx")
+TEMPLATE_FOLDER = os.path.join(BASE_DIR, "templates")
+
+# Creamos las carpetas si no existen
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder=TEMPLATE_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
-@app.route('/', methods=['GET'])
+def get_tracks():
+    """Función auxiliar para obtener las listas de pistas de forma ordenada."""
+    try:
+        raw_tracks = sorted(os.listdir(app.config['UPLOAD_FOLDER']), reverse=True)
+    except FileNotFoundError:
+        raw_tracks = []
+    try:
+        processed_tracks = sorted(os.listdir(app.config['OUTPUT_FOLDER']), reverse=True)
+    except FileNotFoundError:
+        processed_tracks = []
+    return raw_tracks, processed_tracks
+
+@app.route('/')
 def index():
-    # Esta ruta ahora muestra la lista de archivos ya subidos
-    tracks = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('ui-app.html', tracks=tracks)
+    """
+    Ruta principal para la DAW en la computadora.
+    Sirve el archivo 'daw_ui.html'.
+    """
+    raw_tracks, processed_tracks = get_tracks()
+    return render_template('daw_ui.html', raw_tracks=raw_tracks, processed_tracks=processed_tracks)
+
+@app.route('/mobile')
+def mobile_client():
+    """
+    Ruta específica para el cliente móvil (celular).
+    Sirve el archivo 'client_app.html'.
+    """
+    raw_tracks, processed_tracks = get_tracks()
+    return render_template('client_app.html', raw_tracks=raw_tracks, processed_tracks=processed_tracks)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    """Maneja la subida de archivos desde cualquier cliente."""
+    if 'file' not in request.files:
+        return "No se encontró el archivo en la petición", 400
     file = request.files['file']
     if file.filename == '':
-        return "Archivo vacío", 400
+        return "El archivo no tiene nombre", 400
 
-    filename = secure_filename(file.filename)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    save_name = f"{timestamp}_{filename}"
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_name))
+    if file:
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_name = f"{timestamp}_{filename}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_name))
+        
+        # Redirige al usuario a la página desde la que subió el archivo.
+        # Es la forma inteligente de volver a /mobile si se subió desde el celular.
+        return redirect(request.referrer or url_for('mobile_client'))
 
-    # Redirige a la página principal para mostrar la lista de archivos actualizada
-    return redirect(url_for('index'))
-
-@app.route('/process/<filename>', methods=['GET', 'POST'])
+@app.route('/process/<filename>', methods=['POST'])
 def process_track(filename):
-    tracks = os.listdir(app.config['UPLOAD_FOLDER'])
-    
-    if request.method == 'GET':
-        return render_template('ui-app.html', tracks=tracks, selected_track=filename)
+    """Procesa una pista de audio con los efectos seleccionados."""
+    input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    output_name = f"fx_{os.path.splitext(filename)[0]}.wav" # Siempre guarda como .wav para consistencia
+    output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_name)
 
-    elif request.method == 'POST':
-        input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        output_name = f"fx_{filename}"
-        output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_name)
+    # Tomar valores de los sliders del formulario
+    dist = float(request.form.get("dist", 0))
+    chorus = float(request.form.get("chorus", 0))
+    reverb = float(request.form.get("reverb", 0))
+    delay = float(request.form.get("delay", 0))
+    comp = float(request.form.get("comp", 0))
 
-        # Tomar valores de los sliders
-        dist = float(request.form.get("dist", 0))
-        chorus = float(request.form.get("chorus", 0))
-        reverb = float(request.form.get("reverb", 0))
-        delay = float(request.form.get("delay", 0))
-        comp = float(request.form.get("comp", 0))
+    efectos = []
+    if dist > 0: efectos.append(Distortion(drive_db=dist * 40))
+    if chorus > 0: efectos.append(Chorus(rate_hz=1.0, depth=chorus, mix=0.5))
+    if reverb > 0: efectos.append(Reverb(room_size=reverb, damping=0.5, wet_level=0.3, dry_level=0.7))
+    if delay > 0: efectos.append(Delay(delay_seconds=delay * 0.8, feedback=0.4, mix=0.5))
+    if comp > 0: efectos.append(Compressor(threshold_db=-25, ratio=1 + comp * 9))
 
-        efectos = []
-        if dist > 0:
-            efectos.append(Distortion(drive_db=dist * 30))
-        if chorus > 0:
-            efectos.append(Chorus(rate_hz=1.5, depth=chorus))
-        if reverb > 0:
-            efectos.append(Reverb(room_size=reverb))
-        if delay > 0:
-            efectos.append(Delay(delay_seconds=delay, feedback=0.3))
-        if comp > 0:
-            efectos.append(Compressor(threshold_db=-20, ratio=1 + comp*4))
+    procesar_audio(input_path, output_path, efectos) 
 
-        # Llama a la función de la daw-app para procesar el audio
-        procesar_audio(input_path, output_path, efectos) 
-
-        return render_template('ui-app.html', tracks=tracks, processed_track=output_name)
-
+    return redirect(url_for('index'))
 
 @app.route('/download/raw/<filename>')
 def download_raw(filename):
+    """Permite descargar o reproducir las pistas crudas."""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/download/fx/<filename>')
 def download_fx(filename):
+    """Permite descargar o reproducir las pistas procesadas."""
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 if __name__ == "__main__":
+    print("="*50)
+    print("      Servidor de Pedalera Digital Colaborativa")
+    print("="*50)
+    print("   - Para la DAW en la PC, abre: http://127.0.0.1:5000")
+    print("   - Para el celular, busca tu IP (con 'ipconfig' o 'ifconfig')")
+    print("     y abre en su navegador: http://<TU_IP>:5000/mobile")
+    print("="*50)
     app.run(debug=True, host="0.0.0.0", port=5000)

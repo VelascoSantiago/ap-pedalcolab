@@ -1,58 +1,69 @@
 <!doctype html>
-<title>Pedalera Digital Colaborativa</title>
-<h1>Subir y procesar tu pista</h1>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedalera Digital Colaborativa</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; line-height: 1.6; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: auto; padding: 2em; background-color: #fff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .section { margin-bottom: 2em; padding: 1.5em; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9fc; }
+        h1, h2 { color: #555; text-align: center; }
+        form, ul { margin-top: 1.5em; }
+        input[type="file"], input[type="submit"], button { padding: 0.8em; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; cursor: pointer; }
+        input[type="file"] { background-color: #e2eafc; }
+        input[type="submit"] { background-color: #4e8cff; color: white; border: none; }
+        input[type="submit"]:hover { background-color: #3b74d1; }
+        audio { width: 100%; margin-top: 1em; }
+        ul { list-style-type: none; padding: 0; }
+        li { background-color: #fff; padding: 1em; border-radius: 5px; margin-bottom: 0.8em; display: flex; flex-direction: column; }
+        .file-name { font-weight: bold; margin-bottom: 0.5em; }
+        .download-btn { background-color: #28a745; color: white; border: none; padding: 0.5em 1em; text-decoration: none; text-align: center; margin-top: 0.5em; }
+        .download-btn:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pedalera Digital Colaborativa</h1>
+        <p style="text-align: center;">Usa tu celular para grabar y subir pistas. El procesamiento se hará en la aplicación de escritorio en tu computadora.</p>
 
-<form method=post enctype=multipart/form-data action="/upload">
-  <input type=file name=file required>
-  <input type=submit value="Subir Pista">
-</form>
+        <div class="section">
+            <h2>Subir una nueva pista</h2>
+            <form method="post" enctype="multipart/form-data" action="/upload">
+                <input type="file" name="file" required>
+                <input type="submit" value="Subir Pista">
+            </form>
+        </div>
 
-<hr>
+        {% if tracks or processed_tracks %}
+        <div class="section">
+            <h2>Pistas disponibles en tu computadora</h2>
+            {% if tracks %}
+            <h3>Pistas crudas (subidas)</h3>
+            <ul>
+                {% for track in tracks %}
+                    <li>
+                        <div class="file-name">{{ track }}</div>
+                        <audio controls src="/download/raw/{{ track }}"></audio>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
 
-{% if tracks %}
-<h2>Pistas disponibles</h2>
-<ul>
-  {% for track in tracks %}
-    <li>
-      {{ track }}
-      <audio controls src="/download/raw/{{ track }}"></audio>
-      <a href="/process/{{ track }}">Procesar con efectos</a>
-    </li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-{% if selected_track %}
-<hr>
-<h2>Aplicar efectos a {{ selected_track }}</h2>
-<form method=post action="/process/{{ selected_track }}">
-  <label>Distorsión:</label>
-  <input type=range name=dist value=0 min=0 max=1 step=0.1><br>
-
-  <label>Chorus:</label>
-  <input type=range name=chorus value=0 min=0 max=1 step=0.1><br>
-
-  <label>Reverb:</label>
-  <input type=range name=reverb value=0 min=0 max=1 step=0.1><br>
-
-  <label>Delay:</label>
-  <input type=range name=delay value=0 min=0 max=1 step=0.1><br>
-
-  <label>Compresor:</label>
-  <input type=range name=comp value=0 min=0 max=1 step=0.1><br>
-
-  <input type=submit value="Aplicar y Escuchar">
-</form>
-
-<hr>
-{% endif %}
-
-{% if processed_track %}
-<h2>Resultado Procesado</h2>
-<audio controls>
-  <source src="/download/fx/{{ processed_track }}" type="audio/wav">
-  Tu navegador no soporta audio.
-</audio>
-<br>
-<a href="/download/fx/{{ processed_track }}">Descargar</a>
-{% endif %}
+            {% if processed_tracks %}
+            <h3>Pistas procesadas y mezclas</h3>
+            <ul>
+                {% for track in processed_tracks %}
+                    <li>
+                        <div class="file-name">{{ track }}</div>
+                        <audio controls src="/download/fx/{{ track }}"></audio>
+                        <a href="/download/fx/{{ track }}" class="download-btn" download>Descargar</a>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

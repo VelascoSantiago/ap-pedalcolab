@@ -1,5 +1,5 @@
-# server.py
-from flask import Flask, request, render_template, send_from_directory, redirect, url_for
+    # server.py
+from flask import Flask, request, render_template, send_from_directory, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -50,8 +50,22 @@ def mobile_client():
     Ruta específica para el cliente móvil (celular).
     Sirve el archivo 'client_app.html'.
     """
+    # La carga inicial de pistas sigue funcionando igual
     raw_tracks, processed_tracks = get_tracks()
     return render_template('client_app.html', raw_tracks=raw_tracks, processed_tracks=processed_tracks)
+
+# --- NUEVA RUTA API ---
+@app.route('/api/tracks')
+def api_tracks():
+    """
+    Esta ruta no devuelve HTML. Devuelve los datos de las pistas en formato JSON
+    para que el JavaScript del cliente pueda consumirlos.
+    """
+    raw_tracks, processed_tracks = get_tracks()
+    return jsonify({
+        'raw_tracks': raw_tracks,
+        'processed_tracks': processed_tracks
+    })
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -68,18 +82,15 @@ def upload_file():
         save_name = f"{timestamp}_{filename}"
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_name))
         
-        # Redirige al usuario a la página desde la que subió el archivo.
-        # Es la forma inteligente de volver a /mobile si se subió desde el celular.
         return redirect(request.referrer or url_for('mobile_client'))
 
 @app.route('/process/<filename>', methods=['POST'])
 def process_track(filename):
     """Procesa una pista de audio con los efectos seleccionados."""
     input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    output_name = f"fx_{os.path.splitext(filename)[0]}.wav" # Siempre guarda como .wav para consistencia
+    output_name = f"fx_{os.path.splitext(filename)[0]}.wav"
     output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_name)
 
-    # Tomar valores de los sliders del formulario
     dist = float(request.form.get("dist", 0))
     chorus = float(request.form.get("chorus", 0))
     reverb = float(request.form.get("reverb", 0))
@@ -99,12 +110,10 @@ def process_track(filename):
 
 @app.route('/download/raw/<filename>')
 def download_raw(filename):
-    """Permite descargar o reproducir las pistas crudas."""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/download/fx/<filename>')
 def download_fx(filename):
-    """Permite descargar o reproducir las pistas procesadas."""
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 if __name__ == "__main__":

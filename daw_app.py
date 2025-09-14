@@ -1,45 +1,32 @@
-# pedalera.py
-from pedalboard import Pedalboard, Chorus, Distortion, Compressor, Delay, Reverb
-from pedalboard.io import AudioFile
+# daw_app.py
+# Este archivo contiene el motor de procesamiento de audio.
+import soundfile as sf
+from pedalboard import Pedalboard
 
-def procesar_audio(input_file, output_file, efectos=None):
+def procesar_audio(input_path, output_path, efectos):
     """
-    Procesa un archivo de audio con la lista de efectos que pases.
+    Lee un archivo de audio, le aplica una cadena de efectos
+    y lo guarda en una nueva ubicación.
 
-    input_file: str → ruta del audio de entrada (.wav, .mp3)
-    output_file: str → ruta del audio de salida procesado
-    efectos: list → lista de instancias de efectos de pedalboard
+    Args:
+        input_path (str): Ruta al archivo de audio de entrada.
+        output_path (str): Ruta donde se guardará el archivo procesado.
+        efectos (list): Una lista de objetos de efecto de la librería pedalboard.
     """
-    if efectos is None:
-        efectos = []
+    try:
+        # Cargar el archivo de audio
+        audio, sample_rate = sf.read(input_path)
 
-    # Cargar audio
-    with AudioFile(input_file).resampled_to(44100) as f:
-        audio = f.read(f.frames)
-        samplerate = f.samplerate
+        # Crear una pedalera (cadena de efectos) con los efectos seleccionados
+        board = Pedalboard(efectos, sample_rate=sample_rate)
 
-    # Crear pedalera
-    board = Pedalboard(efectos)
+        # Procesar el audio
+        processed_audio = board(audio)
 
-    # Procesar señal
-    effected = board(audio, samplerate)
+        # Guardar el nuevo archivo de audio
+        sf.write(output_path, processed_audio, sample_rate)
 
-    # Guardar audio procesado
-    with AudioFile(output_file, 'w', samplerate, effected.shape[0]) as f:
-        f.write(effected)
+        print(f"Archivo procesado y guardado en: {output_path}")
 
-    return output_file
-
-
-# Ejemplo de uso
-if __name__ == "__main__":
-    efectos = [
-        Distortion(drive_db=15),
-        Chorus(),
-        Reverb(room_size=0.4),
-        Delay(delay_seconds=0.25, feedback=0.3),
-        Compressor(threshold_db=-20, ratio=2.5)
-    ]
-
-    procesar_audio("input.wav", "output.wav", efectos)
-    print("Procesado guardado en output.wav")
+    except Exception as e:
+        print(f"Error al procesar el audio: {e}")

@@ -1,0 +1,215 @@
+/* templates/static/styles.css */
+
+/* --- 1. Importación de Fuente y Variables Globales --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+:root {
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg-color: #f5f5f7; /* Un blanco ligeramente apagado, típico de Apple */
+    --card-bg-color: #ffffff;
+    --text-color: #1d1d1f; /* Negro suave de Apple */
+    --text-color-light: #6e6e73;
+    --border-color: #d2d2d7;
+    --accent-color: #007aff; /* Azul de Apple */
+    --accent-color-hover: #0056b3;
+    --success-color: #34c759;
+    --daw-bg-color: #1c1c1e; /* Fondo oscuro para la DAW */
+    --daw-card-bg-color: #2c2c2e;
+    --daw-text-color: #f5f5f7;
+    --daw-accent-color: #0a84ff;
+    --daw-border-color: #3a3a3c;
+}
+
+/* --- 2. Estilos Base y Reseteo --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+/* --- 3. Componentes Compartidos (Botones, Tarjetas, Listas) --- */
+
+.logo-container {
+    text-align: center;
+    padding: 1.5rem 0;
+}
+
+.logo-container img {
+    max-width: 150px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem 1rem;
+}
+
+.card {
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+h1, h2, h3 {
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+    color: var(--text-color-light);
+}
+
+.button {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.button:hover {
+    background-color: var(--accent-color-hover);
+}
+
+.button-success {
+    background-color: var(--success-color);
+}
+
+.track-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.track-item {
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.8rem;
+    border: 1px solid var(--border-color);
+}
+
+.track-item .file-name {
+    font-weight: 500;
+    margin-bottom: 0.8rem;
+}
+
+audio {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* --- 4. Estilos Específicos para la App del Cliente (Móvil) --- */
+
+#mobile-app form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#mobile-app input[type="file"] {
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+    background-color: #f9f9f9;
+    text-align: center;
+}
+
+
+/* --- 5. Estilos Específicos para la App de la DAW (Escritorio) --- */
+#daw-app {
+    background-color: var(--daw-bg-color);
+    color: var(--daw-text-color);
+    min-height: 100vh;
+}
+
+#daw-app .container {
+    display: flex;
+    max-width: 1400px;
+    gap: 1.5rem;
+    padding-top: 2rem;
+}
+
+#daw-app .panel {
+    background-color: var(--daw-card-bg-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--daw-border-color);
+}
+
+#daw-app .tracks-panel { flex: 1; }
+#daw-app .effects-panel { flex: 2; }
+
+#daw-app h1, #daw-app h2, #daw-app h3 {
+    color: var(--daw-text-color);
+    border-bottom: 1px solid var(--daw-border-color);
+    padding-bottom: 0.75rem;
+}
+
+#daw-app .track-item {
+    background-color: #3a3a3c;
+    border: 1px solid #4a4a4c;
+    transition: background-color 0.2s ease;
+}
+
+#daw-app .track-item.selectable {
+    cursor: pointer;
+}
+
+#daw-app .track-item.selectable:hover {
+    background-color: #4a4a4c;
+}
+
+#daw-app .track-item.selected {
+    background-color: var(--daw-accent-color);
+    color: white;
+    font-weight: bold;
+}
+
+#daw-app .effect-control {
+    margin-bottom: 1.5rem;
+}
+
+#daw-app label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+#daw-app input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+#daw-app #selected-track-display {
+    text-align: center;
+    padding: 1rem;
+    background-color: #1c1c1e;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    font-weight: 500;
+    color: var(--daw-accent-color);
+}

@@ -18,10 +18,14 @@
                 <h2>Librería de Pistas</h2>
                 
                 <h3>Pistas Crudas (Subidas)</h3>
-                <ul id="raw-tracks-list" class="track-list">
-                    {% for track in raw_tracks %}
-                        <li class="track-item selectable" onclick="selectTrack('{{ track }}')">{{ track }}</li>
-                    {% endfor %}
+            <ul id="raw-tracks-list">
+                
+                {% for track in raw_tracks %}
+                    <li class="track-item">
+                        <span>{{ track }}</span>
+                        <audio controls src="{{ url_for('download_raw', filename=track) }}"></audio>
+                    </li>
+                {% endfor %}
                 </ul>
 
                 <h3>Pistas Procesadas (FX)</h3>

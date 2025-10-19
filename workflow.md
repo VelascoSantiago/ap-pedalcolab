@@ -10,34 +10,7 @@ El proyecto es un sistema de producción musical que permite a un músico grabar
 
 ## Diagrama de Flujo
 
-+---------------------------+      Inicia      +---------------------------+
-|      Productor (PC)       |---------------->|     Launcher Gráfico      |
-+---------------------------+                  +-------------+-------------+
-                                                             |
-                                                             | Abre Servidor
-                                                             v
-+---------------------------+                  +---------------------------+
-|       Músico (Móvil)      |<---- Red WiFi -->|      Servidor Flask       |
-+-------------+-------------+                  +-------------+-------------+
-              |                                              ^
-              | 1. Sube Pista (audio_raw)                    |
-              v                                              |
-+-------------+-------------+                                | 3. Pide Pista Procesada
-| Pistas Procesadas (FX)    |                                |
-|   (Escucha y Descarga)    |<-------------------------------+
-+---------------------------+
-
-              +----------------------------------------------+
-              |           Flujo del Productor (PC)           |
-              |                                              |
-              | 2. Selecciona Pista, aplica FX, procesa      |
-              |    (Lee de 'audio_raw', escribe en 'audio_fx')|
-              v                                              |
-+-------------+-------------+                                |
-|        Interfaz DAW       |<-------------------------------+
-|     ([http://127.0.0.1](http://127.0.0.1))    |
-+---------------------------+
-
+por agregar...
 
 ---
 

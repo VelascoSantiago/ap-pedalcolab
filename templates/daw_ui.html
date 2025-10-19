@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedalcolab - DAW</title>
+    <title>DAW - Interfaz de Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    
 </head>
-<body>
-    <div id="daw-app">
+<div id="daw-app">
         <div class="container">
             <div class="panel tracks-panel">
                 <div class="logo-container">
@@ -15,62 +15,100 @@
                         alt="Logo de Pedalcolab" 
                         style="filter: invert(1); max-width: 120px;">
                 </div>
-                <h2>Librería de Pistas</h2>
-                
-                <h3>Pistas Crudas (Subidas)</h3>
+            <h2>Librería de Pistas</h2>
+            <h3>Pistas Crudas (Subidas)</h3>
             <ul id="raw-tracks-list">
-                
                 {% for track in raw_tracks %}
-                    <li class="track-item">
+                    <li class="track-item" onclick="selectTrack('{{ track }}')">
                         <span>{{ track }}</span>
-                        <audio controls src="{{ url_for('download_raw', filename=track) }}"></audio>
+                        <audio controls onclick="event.stopPropagation();"><source src="{{ url_for('download_raw', filename=track) }}"></audio>
                     </li>
                 {% endfor %}
-                </ul>
+            </ul>
+            <h3>Pistas Procesadas (FX)</h3>
+            <ul>
+                {% for track in processed_tracks %}
+                    <li class="track-item">
+                        <span>{{ track }}</span>
+                        <audio controls><source src="{{ url_for('download_fx', filename=track) }}"></audio>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
 
-                <h3>Pistas Procesadas (FX)</h3>
-                <ul class="track-list">
-                    {% for track in processed_tracks %}
-                        <li class="track-item">
-                            <div class="file-name">{{ track }}</div>
-                            <audio controls src="/download/fx/{{ track }}"></audio>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+        <div class="panel effects-panel">
+            <h1>Panel de Efectos</h1>
+            <form id="effects-form" method="post" action="">
+                <div id="selected-track-display">Selecciona una pista cruda para procesar</div>
 
-            <div class="panel effects-panel">
-                <h1>Panel de Efectos</h1>
-                <form id="effects-form" method="post" action="">
-                    
-                    <div id="selected-track-display">Selecciona una pista cruda para procesar</div>
-
+                <!-- SECCIÓN DE DISTORSIÓN -->
+                <div class="effects-section">
+                    <h2>Distorsión</h2>
                     <div class="effect-control">
-                        <label for="dist">Distorsión (Drive)</label>
+                        <label for="dist">Drive</label>
                         <input type="range" id="dist" name="dist" min="0" max="1" step="0.01" value="0">
                     </div>
                     <div class="effect-control">
-                        <label for="chorus">Chorus (Depth)</label>
+                        <label for="bitcrush">Bitcrush</label>
+                        <input type="range" id="bitcrush" name="bitcrush" min="0" max="1" step="0.01" value="0">
+                    </div>
+                    <div class="effect-control">
+                        <label for="clipping">Clipping</label>
+                        <input type="range" id="clipping" name="clipping" min="0" max="1" step="0.01" value="0">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DE MODULACIÓN -->
+                <div class="effects-section">
+                    <h2>Modulación</h2>
+                    <div class="effect-control">
+                        <label for="chorus">Chorus</label>
                         <input type="range" id="chorus" name="chorus" min="0" max="1" step="0.01" value="0">
                     </div>
                     <div class="effect-control">
-                        <label for="reverb">Reverb (Room Size)</label>
+                        <label for="phaser">Phaser</label>
+                        <input type="range" id="phaser" name="phaser" min="0" max="1" step="0.01" value="0">
+                    </div>
+                    <!-- ===== Slider de Tremolo eliminado de aquí ===== -->
+                </div>
+
+                <!-- SECCIÓN DE TIEMPO Y ESPACIO -->
+                <div class="effects-section">
+                    <h2>Tiempo y Espacio</h2>
+                    <div class="effect-control">
+                        <label for="reverb">Reverb</label>
                         <input type="range" id="reverb" name="reverb" min="0" max="1" step="0.01" value="0">
                     </div>
-                    <input type="submit" value="Procesar Pista" class="button">
-                </form>
-            </div>
+                    <div class="effect-control">
+                        <label for="delay">Delay</label>
+                        <input type="range" id="delay" name="delay" min="0" max="1" step="0.01" value="0">
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN DE PITCH -->
+                <div class="effects-section">
+                    <h2>Pitch</h2>
+                    <div class="effect-control">
+                        <label for="pitchshift">Pitch Shift (Semitonos)</label>
+                        <input type="range" id="pitchshift" name="pitchshift" min="-12" max="12" step="1" value="0">
+                    </div>
+                </div>
+
+                <input type="submit" value="Procesar Pista" class="submit-btn" style="margin-top: 20px;">
+            </form>
         </div>
     </div>
 
     <script>
         function selectTrack(filename) {
             const form = document.getElementById('effects-form');
-            form.action = '/process/' + filename;
-            document.getElementById('selected-track-display').textContent = 'Procesando: ' + filename;
-
+            form.action = '/process/' + encodeURIComponent(filename);
+            const display = document.getElementById('selected-track-display');
+            display.textContent = 'Procesando: ' + filename;
+            display.style.color = '#3e8ed0';
             document.querySelectorAll('#raw-tracks-list li').forEach(item => {
-                item.classList.toggle('selected', item.textContent === filename);
+                const trackName = item.getAttribute('onclick').match(/'([^']+)'/)[1];
+                item.classList.toggle('selected', trackName === filename);
             });
         }
     </script>

@@ -3,37 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedalcolab - Grabar</title>
+    <title>PedalColab - Mobile</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Añadimos estilo para el botón de eliminar (ajustado para móvil) -->
-    <style>
-        .track-item { position: relative; } /* Para posicionar el botón */
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 28px;
-            height: 28px;
-            background-color: #e74c3c; /* Rojo */
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 28px;
-            text-align: center;
-        }
-        .delete-btn:hover { background-color: #c0392b; } /* Rojo más oscuro */
-    </style>
+    <!-- Estilo para el botón de eliminar adaptado -->
+    <style> .delete-btn { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; background-color: #e74c3c; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 16px; font-weight: bold; line-height: 28px; text-align: center; } .delete-btn:hover { background-color: #c0392b; } </style>
 </head>
 <body id="mobile-app">
     <div class="logo-container">
         <a href="https://github.com/VelascoSantiago/ap-digital-pedalboard" target="_blank" rel="noopener noreferrer">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo de Pedalcolab">
         </a>
-        </div>
-
+    </div>
     <div class="container">
         <div class="card">
             <h2>Subir nueva pista</h2>
@@ -42,15 +22,12 @@
                 <input type="submit" value="Subir Pista" class="button">
             </form>
         </div>
-
         <div class="card">
             <h2>Pistas en el Servidor</h2>
-            
             <h3>Pistas Crudas</h3>
             <ul id="raw-tracks-list" class="track-list">
                 <!-- Se llenará dinámicamente -->
             </ul>
-            
             <h3>Pistas Procesadas</h3>
             <ul id="processed-tracks-list" class="track-list">
                 <!-- Se llenará dinámicamente -->
@@ -59,12 +36,16 @@
     </div>
 
     <script>
+        const rawList = document.getElementById('raw-tracks-list');
+        const processedList = document.getElementById('processed-tracks-list');
+
+        // Función para crear el HTML de cada pista usando tus clases
         function createTrackElement(track, type) {
             const listItem = document.createElement('li');
-            listItem.className = 'track-item';
-            
+            listItem.className = 'track-item'; // Usamos tu clase .track-item
+
             const fileNameDiv = document.createElement('div');
-            fileNameDiv.className = 'file-name';
+            fileNameDiv.className = 'file-name'; // Usamos tu clase .file-name
             fileNameDiv.textContent = track;
             
             const audioPlayer = document.createElement('audio');
@@ -77,39 +58,34 @@
             if (type === 'fx') {
                 const downloadLink = document.createElement('a');
                 downloadLink.href = `/download/fx/${track}`;
-                downloadLink.className = 'button button-success';
-                downloadLink.style.marginTop = '0.8em';
+                downloadLink.className = 'button button-success'; // Usamos tus clases .button .button-success
                 downloadLink.textContent = 'Descargar';
                 downloadLink.download = track;
                 listItem.appendChild(downloadLink);
             }
             
-            // ===== INICIO BOTÓN ELIMINAR =====
             const deleteButton = document.createElement('button');
             deleteButton.className = 'delete-btn';
-            deleteButton.innerHTML = '&times;'; // Símbolo 'x'
+            deleteButton.innerHTML = '&times;';
             deleteButton.onclick = (event) => deleteTrack(type, track, event);
             listItem.appendChild(deleteButton);
-            // ===== FIN BOTÓN ELIMINAR =====
             
             return listItem;
         }
 
         async function updateTrackLists() {
             try {
-                const response = await fetch('/api/tracks'); // Usando la ruta de tu server.py
+                const response = await fetch('/api/tracks'); // Usamos tu ruta /api/tracks
                 const data = await response.json();
-                const rawList = document.getElementById('raw-tracks-list');
-                const processedList = document.getElementById('processed-tracks-list');
+                
                 rawList.innerHTML = '';
-                processedList.innerHTML = '';
-
                 if (data.raw_tracks.length > 0) {
                     data.raw_tracks.forEach(track => rawList.appendChild(createTrackElement(track, 'raw')));
                 } else {
                     rawList.innerHTML = '<li class="track-item">No hay pistas crudas todavía.</li>';
                 }
                 
+                processedList.innerHTML = '';
                 if (data.processed_tracks.length > 0) {
                     data.processed_tracks.forEach(track => processedList.appendChild(createTrackElement(track, 'fx')));
                 } else {
@@ -120,30 +96,62 @@
             }
         }
 
-        // ===== INICIO NUEVA FUNCIÓN DELETE =====
         async function deleteTrack(type, filename, event) {
-            event.stopPropagation(); // Evita clics accidentales en otros elementos
-
+            event.stopPropagation();
             if (confirm(`¿Estás seguro de que quieres eliminar "${filename}"?`)) {
                 try {
-                    const response = await fetch(`/delete/${type}/${encodeURIComponent(filename)}`, {
-                        method: 'POST',
-                    });
+                    const response = await fetch(`/delete/${type}/${encodeURIComponent(filename)}`, { method: 'POST' });
                     const result = await response.json();
                     if (result.success) {
-                        updateTrackLists(); // Refresca la lista inmediatamente
-                    } else {
-                        alert('Error al eliminar: ' + result.error);
-                    }
-                } catch (error) {
-                    alert('Error de red al intentar eliminar: ' + error.message);
-                }
+                        updateTrackLists();
+                    } else { alert('Error al eliminar: ' + result.error); }
+                } catch (error) { alert('Error de red: ' + error.message); }
             }
         }
-        // ===== FIN NUEVA FUNCIÓN DELETE =====
 
         document.addEventListener('DOMContentLoaded', updateTrackLists);
-        setInterval(updateTrackLists, 5000);
+        // Reemplaza el setInterval anterior por este bloque
+        let isUserInteracting = false;
+        let interactionTimeout = null;
+
+        function markInteraction() {
+            isUserInteracting = true;
+            clearTimeout(interactionTimeout);
+            // si no hay interacción en 12s, consideramos que dejó de interactuar
+            interactionTimeout = setTimeout(() => { isUserInteracting = false; }, 12000);
+        }
+
+        // detectar interacción en controles / click (pero ignorar clicks en botones de eliminar/descarga para no bloquearho innecesariamente)
+        document.addEventListener('input', markInteraction, true);
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.classList && e.target.classList.contains('delete-btn')) return;
+            markInteraction();
+        }, true);
+        document.addEventListener('touchstart', markInteraction, true);
+
+        // función robusta que detecta si hay algún audio reproduciéndose
+        function isAnyAudioPlaying() {
+            const audios = document.querySelectorAll('audio');
+            for (const a of audios) {
+                // algunos navegadores usan .paused, otros pueden tener .ended
+                if (!a.paused && !a.ended && a.currentTime > 0) return true;
+            }
+            return false;
+        }
+
+        // comprobación periódica: si NO hay audio reproduciéndose ni interacción, actualizamos
+        setInterval(() => {
+            if (!isAnyAudioPlaying() && !isUserInteracting) {
+                // llama a la función correspondiente según la página
+                if (typeof updateTrackLists === 'function') updateTrackLists();
+                if (typeof fetchAndUpdateAllTracks === 'function') fetchAndUpdateAllTracks();
+            } else {
+                // opcional para debug
+                // console.log('Refresco pausado — audioPlaying:', isAnyAudioPlaying(), 'interacting:', isUserInteracting);
+            }
+        }, 8000);
+
     </script>
 </body>
 </html>
+

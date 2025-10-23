@@ -213,3 +213,61 @@ audio {
     font-weight: 500;
     color: var(--daw-accent-color);
 }
+
+#daw-app .track-item {
+    position: relative;
+}
+
+/* 2. Estilo del botón 'X' para la DAW (Oscuro) */
+#daw-app .delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 25px;
+    height: 25px;
+    background-color: #c0392b; /* Rojo */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 25px;
+    text-align: center;
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+}
+
+#daw-app .track-item:hover .delete-btn {
+    opacity: 1; /* El botón solo se ve claro al pasar el mouse sobre el item */
+}
+
+#daw-app .delete-btn:hover {
+    background-color: #e74c3c; /* Rojo más brillante */
+}
+
+/* 3. Estilo del botón 'X' para el Cliente (Claro) */
+#mobile-app .track-item {
+    position: relative;
+}
+
+#mobile-app .delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background-color: #e74c3c; /* Rojo */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 28px;
+    text-align: center;
+}
+
+#mobile-app .delete-btn:hover {
+    background-color: #c0392b; /* Rojo más oscuro */
+}

@@ -5,36 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DAW - Interfaz de Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    
-    <!-- Añadimos estilo para el botón de eliminar -->
-    <style>
-        .track-item { position: relative; } /* Para posicionar el botón */
-        .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 25px;
-            height: 25px;
-            background-color: #c0392b; /* Rojo */
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            line-height: 25px;
-            text-align: center;
-            opacity: 0.3;
-            transition: opacity 0.2s ease;
-        }
-        .track-item:hover .delete-btn { opacity: 1; }
-        .delete-btn:hover { background-color: #e74c3c; } /* Rojo más brillante */
-    </style>
-    
 </head>
-<body id="daw-app"> <!-- Se mantiene tu ID para que el CSS funcione -->
+<body id="daw-app"> <!-- Usamos tu ID -->
     <div class="container">
-        <div class="panel tracks-panel">
+        <div class="panel tracks-panel"> <!-- Usamos tu clase .panel -->
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" 
                      alt="Logo de Pedalcolab" 
@@ -42,87 +16,148 @@
             </div>
             <h2>Librería de Pistas</h2>
             <h3>Pistas Crudas (Subidas)</h3>
-            <ul id="raw-tracks-list">
-                {% for track in raw_tracks %}
-                    <li class="track-item" onclick="selectTrack('{{ track }}')">
-                        <span>{{ track }}</span>
-                        <audio controls onclick="event.stopPropagation();"><source src="{{ url_for('download_raw', filename=track) }}"></audio>
-                        <!-- ===== INICIO BOTÓN ELIMINAR ===== -->
-                        <button class="delete-btn" onclick="deleteTrack('raw', '{{ track }}', event)">×</button>
-                        <!-- ===== FIN BOTÓN ELIMINAR ===== -->
-                    </li>
-                {% endfor %}
+            <ul id="raw-tracks-list" class="track-list"> <!-- Usamos tu clase .track-list -->
+                <!-- Se llenará dinámicamente -->
             </ul>
             <h3>Pistas Procesadas (FX)</h3>
-            <ul id="processed-tracks-list"> <!-- ID añadido por si lo necesitas después -->
-                {% for track in processed_tracks %}
-                    <li class="track-item">
-                        <span>{{ track }}</span>
-                        <audio controls><source src="{{ url_for('download_fx', filename=track) }}"></audio>
-                        <!-- ===== INICIO BOTÓN ELIMINAR ===== -->
-                        <button class="delete-btn" onclick="deleteTrack('fx', '{{ track }}', event)">×</button>
-                        <!-- ===== FIN BOTÓN ELIMINAR ===== -->
-                    </li>
-                {% endfor %}
+            <ul id="processed-tracks-list" class="track-list"> <!-- Usamos tu clase .track-list -->
+                <!-- Se llenará dinámicamente -->
             </ul>
         </div>
 
-        <div class="panel effects-panel">
+        <div class="panel effects-panel"> <!-- Usamos tu clase .panel -->
             <h1>Panel de Efectos</h1>
             <form id="effects-form" method="post" action="">
                 <div id="selected-track-display">Selecciona una pista cruda para procesar</div>
-                <!-- (Se mantienen tus secciones de efectos) -->
+                <!-- Se mantienen tus secciones de efectos -->
                 <div class="effects-section"><h2>Distorsión</h2><div class="effect-control"><label for="dist">Drive</label><input type="range" id="dist" name="dist" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="bitcrush">Bitcrush</label><input type="range" id="bitcrush" name="bitcrush" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="clipping">Clipping</label><input type="range" id="clipping" name="clipping" min="0" max="1" step="0.01" value="0"></div></div>
                 <div class="effects-section"><h2>Modulación</h2><div class="effect-control"><label for="chorus">Chorus</label><input type="range" id="chorus" name="chorus" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="phaser">Phaser</label><input type="range" id="phaser" name="phaser" min="0" max="1" step="0.01" value="0"></div></div>
                 <div class="effects-section"><h2>Tiempo y Espacio</h2><div class="effect-control"><label for="reverb">Reverb</label><input type="range" id="reverb" name="reverb" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="delay">Delay</label><input type="range" id="delay" name="delay" min="0" max="1" step="0.01" value="0"></div></div>
                 <div class="effects-section"><h2>Pitch</h2><div class="effect-control"><label for="pitchshift">Pitch Shift (Semitonos)</label><input type="range" id="pitchshift" name="pitchshift" min="-12" max="12" step="1" value="0"></div></div>
-                <input type="submit" value="Procesar Pista" class="submit-btn" style="margin-top: 20px;">
+                 <!-- Añadida sección dinámica que faltaba -->
+                <div class="effects-section"><h2>Dinámica</h2><div class="effect-control"><label for="comp">Compresor</label><input type="range" id="comp" name="comp" min="0" max="1" step="0.01" value="0"></div></div>
+                <input type="submit" value="Procesar Pista" class="button"> <!-- Usamos tu clase .button -->
             </form>
         </div>
     </div>
 
     <script>
-        // --- Tu función selectTrack original ---
+        const rawList = document.getElementById('raw-tracks-list');
+        const processedList = document.getElementById('processed-tracks-list');
+        let selectedTrackName = null;
+
         function selectTrack(filename) {
-            const form = document.getElementById('effects-form');
-            form.action = '/process/' + encodeURIComponent(filename);
-            const display = document.getElementById('selected-track-display');
-            display.textContent = 'Procesando: ' + filename;
-            display.style.color = '#3e8ed0'; // Asegúrate que este color funcione con tu CSS
+            selectedTrackName = filename;
+            document.getElementById('effects-form').action = '/process/' + encodeURIComponent(filename);
+            document.getElementById('selected-track-display').textContent = 'Procesando: ' + filename;
+            updateSelection();
+        }
+
+        function updateSelection() {
             document.querySelectorAll('#raw-tracks-list li').forEach(item => {
-                // Modificado para obtener el nombre del track de forma más segura
-                const trackSpan = item.querySelector('span');
-                if (trackSpan && trackSpan.textContent === filename) {
-                    item.classList.add('selected'); // Asegúrate de tener estilo para '.selected' en tu CSS
-                } else {
-                    item.classList.remove('selected');
-                }
+                // Usamos dataset para guardar el nombre y comparar de forma segura
+                item.classList.toggle('selected', item.dataset.trackName === selectedTrackName);
             });
         }
 
-        // ===== INICIO NUEVA FUNCIÓN DELETE =====
-        async function deleteTrack(type, filename, event) {
-            event.stopPropagation(); // Evita que se seleccione la pista al borrar
+        async function fetchAndUpdateAllTracks() {
+            try {
+                const response = await fetch('/api/tracks'); // Usamos tu ruta API /api/tracks
+                const data = await response.json();
 
-            if (confirm(`¿Estás seguro de que quieres eliminar "${filename}"?\n\nEsta acción no se puede deshacer.`)) {
-                try {
-                    const response = await fetch(`/delete/${type}/${encodeURIComponent(filename)}`, {
-                        method: 'POST',
+                // Actualizar Pistas Crudas
+                rawList.innerHTML = '';
+                if (data.raw_tracks.length > 0) {
+                    data.raw_tracks.forEach(track => {
+                        // Creamos el HTML con tus clases .track-item y .selectable
+                        rawList.innerHTML += `
+                            <li class="track-item selectable" data-track-name="${track}" onclick="selectTrack('${track}')">
+                                <div class="file-name">${track}</div>
+                                <audio controls onclick="event.stopPropagation();"><source src="/download/raw/${track}"></audio>
+                                <button class="delete-btn" onclick="deleteTrack('raw', '${track}', event)">&times;</button>
+                            </li>`;
                     });
-                    const result = await response.json();
-                    if (result.success) {
-                        // Como NO estamos actualizando dinámicamente,
-                        // simplemente recargamos la página para ver el cambio.
-                        window.location.reload(); 
-                    } else {
-                        alert('Error al eliminar: ' + result.error);
-                    }
-                } catch (error) {
-                    alert('Error de red al intentar eliminar: ' + error.message);
+                } else {
+                    rawList.innerHTML = '<li class="track-item">Sube una pista desde el celular...</li>';
                 }
+
+                // Actualizar Pistas Procesadas
+                processedList.innerHTML = '';
+                if (data.processed_tracks.length > 0) {
+                    data.processed_tracks.forEach(track => {
+                         // Creamos el HTML con tu clase .track-item
+                        processedList.innerHTML += `
+                            <li class="track-item">
+                                <div class="file-name">${track}</div>
+                                <audio controls><source src="/download/fx/${track}"></audio>
+                                <button class="delete-btn" onclick="deleteTrack('fx', '${track}', event)">&times;</button>
+                            </li>`;
+                    });
+                } else {
+                    processedList.innerHTML = '<li class="track-item">Ninguna pista procesada.</li>';
+                }
+                
+                updateSelection(); // Re-aplicar la selección visual
+            } catch (error) {
+                console.error('Error al actualizar las pistas:', error);
             }
         }
-        // ===== FIN NUEVA FUNCIÓN DELETE =====
+
+        async function deleteTrack(type, filename, event) {
+            event.stopPropagation();
+            if (confirm(`¿Estás seguro de que quieres eliminar "${filename}"?`)) {
+                try {
+                    const response = await fetch(`/delete/${type}/${encodeURIComponent(filename)}`, { method: 'POST' });
+                    const result = await response.json();
+                    if (result.success) {
+                        fetchAndUpdateAllTracks(); // Refresca la lista
+                    } else { alert('Error al eliminar: ' + result.error); }
+                } catch (error) { alert('Error de red: ' + error.message); }
+            }
+        }
+        
+        // Reemplaza el setInterval anterior por este bloque
+        let isUserInteracting = false;
+        let interactionTimeout = null;
+            
+        function markInteraction() {
+            isUserInteracting = true;
+            clearTimeout(interactionTimeout);
+            // si no hay interacción en 12s, consideramos que dejó de interactuar
+            interactionTimeout = setTimeout(() => { isUserInteracting = false; }, 12000);
+        }
+        
+        // detectar interacción en controles / click (pero ignorar clicks en botones de eliminar/descarga para no bloquearho innecesariamente)
+        document.addEventListener('input', markInteraction, true);
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.classList && e.target.classList.contains('delete-btn')) return;
+            markInteraction();
+        }, true);
+        document.addEventListener('touchstart', markInteraction, true);
+        
+        // función robusta que detecta si hay algún audio reproduciéndose
+        function isAnyAudioPlaying() {
+            const audios = document.querySelectorAll('audio');
+            for (const a of audios) {
+                // algunos navegadores usan .paused, otros pueden tener .ended
+                if (!a.paused && !a.ended && a.currentTime > 0) return true;
+            }
+            return false;
+        }
+        
+        // comprobación periódica: si NO hay audio reproduciéndose ni interacción, actualizamos
+        setInterval(() => {
+            if (!isAnyAudioPlaying() && !isUserInteracting) {
+                // llama a la función correspondiente según la página
+                if (typeof updateTrackLists === 'function') updateTrackLists();
+                if (typeof fetchAndUpdateAllTracks === 'function') fetchAndUpdateAllTracks();
+            } else {
+                // opcional para debug
+                // console.log('Refresco pausado — audioPlaying:', isAnyAudioPlaying(), 'interacting:', isUserInteracting);
+            }
+        }, 8000);
+
+        document.addEventListener('DOMContentLoaded', fetchAndUpdateAllTracks);
     </script>
 </body>
 </html>

@@ -29,6 +29,16 @@ def _get_tracks_lists():
         processed_tracks = []
     return raw_tracks, processed_tracks
 
+def _get_unique_filename(folder, filename):
+    """Genera un nombre único agregando _2, _3... si ya existe."""
+    base, ext = os.path.splitext(filename)
+    counter = 1
+    new_filename = filename
+    while os.path.exists(os.path.join(folder, new_filename)):
+        counter += 1
+        new_filename = f"{base}_{counter}{ext}"
+    return new_filename
+
 # --- Rutas de la Aplicación ---
 @app.route('/')
 def index():
@@ -48,20 +58,22 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return "Archivo no seleccionado", 400
+
     filename = secure_filename(file.filename)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    save_name = f"{timestamp}_{filename}"
+    save_name = _get_unique_filename(app.config['UPLOAD_FOLDER'], filename)
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_name))
-    # redirigir al móvil si viene de ahí, o a index
+
     return redirect(request.referrer or url_for('mobile_view'))
 
 @app.route('/process/<filename>', methods=['POST'])
 def process_track(filename):
     input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    output_name = f"fx_{os.path.splitext(filename)[0]}.wav"
+    base_name, ext = os.path.splitext(filename)
+
+    output_name = f"{base_name}_fx.wav"
+    output_name = _get_unique_filename(app.config['OUTPUT_FOLDER'], output_name)
     output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_name)
 
-    # Creamos el dict con la configuración de efectos (el handler daw_app espera esto)
     effects_config = {
         "dist": float(request.form.get("dist", 0)),
         "bitcrush": float(request.form.get("bitcrush", 0)),
@@ -77,7 +89,6 @@ def process_track(filename):
     try:
         procesar_audio(input_path, output_path, effects_config)
     except Exception as e:
-        # No queremos que el servidor explote: logueamos y redirigimos
         print("Error procesando pista:", e)
 
     return redirect(url_for('index'))

@@ -6,15 +6,40 @@
     <title>DAW - Interfaz de Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     
+    <!-- Añadimos estilo para el botón de eliminar -->
+    <style>
+        .track-item { position: relative; } /* Para posicionar el botón */
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 25px;
+            height: 25px;
+            background-color: #c0392b; /* Rojo */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 25px;
+            text-align: center;
+            opacity: 0.3;
+            transition: opacity 0.2s ease;
+        }
+        .track-item:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { background-color: #e74c3c; } /* Rojo más brillante */
+    </style>
+    
 </head>
-<div id="daw-app">
-        <div class="container">
-            <div class="panel tracks-panel">
-                <div class="logo-container">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" 
-                        alt="Logo de Pedalcolab" 
-                        style="filter: invert(1); max-width: 120px;">
-                </div>
+<body id="daw-app"> <!-- Se mantiene tu ID para que el CSS funcione -->
+    <div class="container">
+        <div class="panel tracks-panel">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                     alt="Logo de Pedalcolab" 
+                     style="filter: invert(1); max-width: 120px;">
+            </div>
             <h2>Librería de Pistas</h2>
             <h3>Pistas Crudas (Subidas)</h3>
             <ul id="raw-tracks-list">
@@ -22,15 +47,21 @@
                     <li class="track-item" onclick="selectTrack('{{ track }}')">
                         <span>{{ track }}</span>
                         <audio controls onclick="event.stopPropagation();"><source src="{{ url_for('download_raw', filename=track) }}"></audio>
+                        <!-- ===== INICIO BOTÓN ELIMINAR ===== -->
+                        <button class="delete-btn" onclick="deleteTrack('raw', '{{ track }}', event)">×</button>
+                        <!-- ===== FIN BOTÓN ELIMINAR ===== -->
                     </li>
                 {% endfor %}
             </ul>
             <h3>Pistas Procesadas (FX)</h3>
-            <ul>
+            <ul id="processed-tracks-list"> <!-- ID añadido por si lo necesitas después -->
                 {% for track in processed_tracks %}
                     <li class="track-item">
                         <span>{{ track }}</span>
                         <audio controls><source src="{{ url_for('download_fx', filename=track) }}"></audio>
+                        <!-- ===== INICIO BOTÓN ELIMINAR ===== -->
+                        <button class="delete-btn" onclick="deleteTrack('fx', '{{ track }}', event)">×</button>
+                        <!-- ===== FIN BOTÓN ELIMINAR ===== -->
                     </li>
                 {% endfor %}
             </ul>
@@ -40,77 +71,59 @@
             <h1>Panel de Efectos</h1>
             <form id="effects-form" method="post" action="">
                 <div id="selected-track-display">Selecciona una pista cruda para procesar</div>
-
-                <!-- SECCIÓN DE DISTORSIÓN -->
-                <div class="effects-section">
-                    <h2>Distorsión</h2>
-                    <div class="effect-control">
-                        <label for="dist">Drive</label>
-                        <input type="range" id="dist" name="dist" min="0" max="1" step="0.01" value="0">
-                    </div>
-                    <div class="effect-control">
-                        <label for="bitcrush">Bitcrush</label>
-                        <input type="range" id="bitcrush" name="bitcrush" min="0" max="1" step="0.01" value="0">
-                    </div>
-                    <div class="effect-control">
-                        <label for="clipping">Clipping</label>
-                        <input type="range" id="clipping" name="clipping" min="0" max="1" step="0.01" value="0">
-                    </div>
-                </div>
-
-                <!-- SECCIÓN DE MODULACIÓN -->
-                <div class="effects-section">
-                    <h2>Modulación</h2>
-                    <div class="effect-control">
-                        <label for="chorus">Chorus</label>
-                        <input type="range" id="chorus" name="chorus" min="0" max="1" step="0.01" value="0">
-                    </div>
-                    <div class="effect-control">
-                        <label for="phaser">Phaser</label>
-                        <input type="range" id="phaser" name="phaser" min="0" max="1" step="0.01" value="0">
-                    </div>
-                    <!-- ===== Slider de Tremolo eliminado de aquí ===== -->
-                </div>
-
-                <!-- SECCIÓN DE TIEMPO Y ESPACIO -->
-                <div class="effects-section">
-                    <h2>Tiempo y Espacio</h2>
-                    <div class="effect-control">
-                        <label for="reverb">Reverb</label>
-                        <input type="range" id="reverb" name="reverb" min="0" max="1" step="0.01" value="0">
-                    </div>
-                    <div class="effect-control">
-                        <label for="delay">Delay</label>
-                        <input type="range" id="delay" name="delay" min="0" max="1" step="0.01" value="0">
-                    </div>
-                </div>
-                
-                <!-- SECCIÓN DE PITCH -->
-                <div class="effects-section">
-                    <h2>Pitch</h2>
-                    <div class="effect-control">
-                        <label for="pitchshift">Pitch Shift (Semitonos)</label>
-                        <input type="range" id="pitchshift" name="pitchshift" min="-12" max="12" step="1" value="0">
-                    </div>
-                </div>
-
+                <!-- (Se mantienen tus secciones de efectos) -->
+                <div class="effects-section"><h2>Distorsión</h2><div class="effect-control"><label for="dist">Drive</label><input type="range" id="dist" name="dist" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="bitcrush">Bitcrush</label><input type="range" id="bitcrush" name="bitcrush" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="clipping">Clipping</label><input type="range" id="clipping" name="clipping" min="0" max="1" step="0.01" value="0"></div></div>
+                <div class="effects-section"><h2>Modulación</h2><div class="effect-control"><label for="chorus">Chorus</label><input type="range" id="chorus" name="chorus" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="phaser">Phaser</label><input type="range" id="phaser" name="phaser" min="0" max="1" step="0.01" value="0"></div></div>
+                <div class="effects-section"><h2>Tiempo y Espacio</h2><div class="effect-control"><label for="reverb">Reverb</label><input type="range" id="reverb" name="reverb" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="delay">Delay</label><input type="range" id="delay" name="delay" min="0" max="1" step="0.01" value="0"></div></div>
+                <div class="effects-section"><h2>Pitch</h2><div class="effect-control"><label for="pitchshift">Pitch Shift (Semitonos)</label><input type="range" id="pitchshift" name="pitchshift" min="-12" max="12" step="1" value="0"></div></div>
                 <input type="submit" value="Procesar Pista" class="submit-btn" style="margin-top: 20px;">
             </form>
         </div>
     </div>
 
     <script>
+        // --- Tu función selectTrack original ---
         function selectTrack(filename) {
             const form = document.getElementById('effects-form');
             form.action = '/process/' + encodeURIComponent(filename);
             const display = document.getElementById('selected-track-display');
             display.textContent = 'Procesando: ' + filename;
-            display.style.color = '#3e8ed0';
+            display.style.color = '#3e8ed0'; // Asegúrate que este color funcione con tu CSS
             document.querySelectorAll('#raw-tracks-list li').forEach(item => {
-                const trackName = item.getAttribute('onclick').match(/'([^']+)'/)[1];
-                item.classList.toggle('selected', trackName === filename);
+                // Modificado para obtener el nombre del track de forma más segura
+                const trackSpan = item.querySelector('span');
+                if (trackSpan && trackSpan.textContent === filename) {
+                    item.classList.add('selected'); // Asegúrate de tener estilo para '.selected' en tu CSS
+                } else {
+                    item.classList.remove('selected');
+                }
             });
         }
+
+        // ===== INICIO NUEVA FUNCIÓN DELETE =====
+        async function deleteTrack(type, filename, event) {
+            event.stopPropagation(); // Evita que se seleccione la pista al borrar
+
+            if (confirm(`¿Estás seguro de que quieres eliminar "${filename}"?\n\nEsta acción no se puede deshacer.`)) {
+                try {
+                    const response = await fetch(`/delete/${type}/${encodeURIComponent(filename)}`, {
+                        method: 'POST',
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        // Como NO estamos actualizando dinámicamente,
+                        // simplemente recargamos la página para ver el cambio.
+                        window.location.reload(); 
+                    } else {
+                        alert('Error al eliminar: ' + result.error);
+                    }
+                } catch (error) {
+                    alert('Error de red al intentar eliminar: ' + error.message);
+                }
+            }
+        }
+        // ===== FIN NUEVA FUNCIÓN DELETE =====
     </script>
 </body>
 </html>
+

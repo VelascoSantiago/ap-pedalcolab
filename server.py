@@ -103,6 +103,30 @@ def api_tracks():
         'processed_tracks': processed_tracks
     })
 
+@app.route('/delete/<string:track_type>/<string:filename>', methods=['POST'])
+def delete_track(track_type, filename):
+    try:
+        # Validar el nombre del archivo para evitar ataques (Path Traversal)
+        filename = secure_filename(filename)
+
+        if track_type == 'raw':
+            folder = app.config['UPLOAD_FOLDER']
+        elif track_type == 'fx':
+            folder = app.config['OUTPUT_FOLDER']
+        else:
+            return jsonify({"success": False, "error": "Tipo de pista inválido"}), 400
+
+        file_path = os.path.join(folder, filename)
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return jsonify({"success": True, "message": f"Archivo {filename} eliminado."})
+        else:
+            return jsonify({"success": False, "error": "El archivo no existe."}), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 def print_server_instructions():
     print("="*50)
     print("      Servidor de PedalColab")
@@ -114,3 +138,4 @@ def print_server_instructions():
 if __name__ == "__main__":
     print_server_instructions()
     app.run(debug=True, host="0.0.0.0", port=5000)
+

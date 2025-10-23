@@ -5,35 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedalcolab - Grabar</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Añadimos estilo para el botón de eliminar (ajustado para móvil) -->
+    <style>
+        .track-item { position: relative; } /* Para posicionar el botón */
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            background-color: #e74c3c; /* Rojo */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 28px;
+            text-align: center;
+        }
+        .delete-btn:hover { background-color: #c0392b; } /* Rojo más oscuro */
+    </style>
 </head>
-<body>
-    <div id="mobile-app">
-        <div class="logo-container">
-            <a href="https://github.com/VelascoSantiago/ap-digital-pedalboard" target="_blank" rel="noopener noreferrer">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo de Pedalcolab">
-            </a>
-            </div>
+<body id="mobile-app">
+    <div class="logo-container">
+        <a href="https://github.com/VelascoSantiago/ap-digital-pedalboard" target="_blank" rel="noopener noreferrer">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo de Pedalcolab">
+        </a>
+        </div>
 
-        <div class="container">
-            <div class="card">
-                <h2>Subir nueva pista</h2>
-                <form method="post" enctype="multipart/form-data" action="/upload">
-                    <input type="file" name="file" accept="*/*" required>
-                    <input type="submit" value="Subir Pista" class="button">
-                </form>
-            </div>
+    <div class="container">
+        <div class="card">
+            <h2>Subir nueva pista</h2>
+            <form method="post" enctype="multipart/form-data" action="/upload">
+                <input type="file" name="file" accept="*/*" required>
+                <input type="submit" value="Subir Pista" class="button">
+            </form>
+        </div>
 
-            <div class="card">
-                <h2>Pistas en el Servidor</h2>
-                
-                <h3>Pistas Crudas</h3>
-                <ul id="raw-tracks-list" class="track-list">
-                    </ul>
-                
-                <h3>Pistas Procesadas</h3>
-                <ul id="processed-tracks-list" class="track-list">
-                    </ul>
-            </div>
+        <div class="card">
+            <h2>Pistas en el Servidor</h2>
+            
+            <h3>Pistas Crudas</h3>
+            <ul id="raw-tracks-list" class="track-list">
+                <!-- Se llenará dinámicamente -->
+            </ul>
+            
+            <h3>Pistas Procesadas</h3>
+            <ul id="processed-tracks-list" class="track-list">
+                <!-- Se llenará dinámicamente -->
+            </ul>
         </div>
     </div>
 
@@ -63,12 +84,20 @@
                 listItem.appendChild(downloadLink);
             }
             
+            // ===== INICIO BOTÓN ELIMINAR =====
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-btn';
+            deleteButton.innerHTML = '&times;'; // Símbolo 'x'
+            deleteButton.onclick = (event) => deleteTrack(type, track, event);
+            listItem.appendChild(deleteButton);
+            // ===== FIN BOTÓN ELIMINAR =====
+            
             return listItem;
         }
 
         async function updateTrackLists() {
             try {
-                const response = await fetch('/api/tracks');
+                const response = await fetch('/api/tracks'); // Usando la ruta de tu server.py
                 const data = await response.json();
                 const rawList = document.getElementById('raw-tracks-list');
                 const processedList = document.getElementById('processed-tracks-list');
@@ -90,6 +119,28 @@
                 console.error('Error al actualizar las listas de pistas:', error);
             }
         }
+
+        // ===== INICIO NUEVA FUNCIÓN DELETE =====
+        async function deleteTrack(type, filename, event) {
+            event.stopPropagation(); // Evita clics accidentales en otros elementos
+
+            if (confirm(`¿Estás seguro de que quieres eliminar "${filename}"?`)) {
+                try {
+                    const response = await fetch(`/delete/${type}/${encodeURIComponent(filename)}`, {
+                        method: 'POST',
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        updateTrackLists(); // Refresca la lista inmediatamente
+                    } else {
+                        alert('Error al eliminar: ' + result.error);
+                    }
+                } catch (error) {
+                    alert('Error de red al intentar eliminar: ' + error.message);
+                }
+            }
+        }
+        // ===== FIN NUEVA FUNCIÓN DELETE =====
 
         document.addEventListener('DOMContentLoaded', updateTrackLists);
         setInterval(updateTrackLists, 5000);

@@ -29,13 +29,102 @@
             <h1>Panel de Efectos</h1>
             <form id="effects-form" method="post" action="">
                 <div id="selected-track-display">Selecciona una pista cruda para procesar</div>
-                <!-- Se mantienen tus secciones de efectos -->
-                <div class="effects-section"><h2>Distorsión</h2><div class="effect-control"><label for="dist">Drive</label><input type="range" id="dist" name="dist" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="bitcrush">Bitcrush</label><input type="range" id="bitcrush" name="bitcrush" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="clipping">Clipping</label><input type="range" id="clipping" name="clipping" min="0" max="1" step="0.01" value="0"></div></div>
-                <div class="effects-section"><h2>Modulación</h2><div class="effect-control"><label for="chorus">Chorus</label><input type="range" id="chorus" name="chorus" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="phaser">Phaser</label><input type="range" id="phaser" name="phaser" min="0" max="1" step="0.01" value="0"></div></div>
-                <div class="effects-section"><h2>Tiempo y Espacio</h2><div class="effect-control"><label for="reverb">Reverb</label><input type="range" id="reverb" name="reverb" min="0" max="1" step="0.01" value="0"></div><div class="effect-control"><label for="delay">Delay</label><input type="range" id="delay" name="delay" min="0" max="1" step="0.01" value="0"></div></div>
-                <div class="effects-section"><h2>Pitch</h2><div class="effect-control"><label for="pitchshift">Pitch Shift (Semitonos)</label><input type="range" id="pitchshift" name="pitchshift" min="-12" max="12" step="1" value="0"></div></div>
-                 <!-- Añadida sección dinámica que faltaba -->
-                <div class="effects-section"><h2>Dinámica</h2><div class="effect-control"><label for="comp">Compresor</label><input type="range" id="comp" name="comp" min="0" max="1" step="0.01" value="0"></div></div>
+                <!-- Secciones de efectos -->
+                <!-- SECCIÓN DE DISTORSIÓN -->
+                <div class="effects-section">
+                    <h2>Distorsión</h2>
+                    <div class="effect-control">
+                        <label for="dist-knob">Drive</label>
+                        <div class="knob-container">
+                            <div class="knob" id="dist-knob" data-effect="dist" data-value="0"></div>
+                            <div class="knob-value" id="dist-value">0%</div>
+                            <input type="hidden" id="dist-hidden-input" name="dist" value="0">
+                        </div>
+                    </div>
+                    <div class="effect-control">
+                        <label for="bitcrush-knob">Bitcrush</label>
+                        <div class="knob-container">
+                            <div class="knob" id="bitcrush-knob" data-effect="bitcrush" data-value="0"></div>
+                            <div class="knob-value" id="bitcrush-value">0%</div>
+                            <input type="hidden" id="bitcrush-hidden-input" name="bitcrush" value="0">
+                        </div>
+                    </div>
+                    <div class="effect-control">
+                        <label for="clipping-knob">Clipping</label>
+                        <div class="knob-container">
+                            <div class="knob" id="clipping-knob" data-effect="clipping" data-value="0"></div>
+                            <div class="knob-value" id="clipping-value">0%</div>
+                            <input type="hidden" id="clipping-hidden-input" name="clipping" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DE MODULACIÓN -->
+                <div class="effects-section">
+                    <h2>Modulación</h2>
+                    <div class="effect-control">
+                        <label for="chorus-knob">Chorus</label>
+                        <div class="knob-container">
+                            <div class="knob" id="chorus-knob" data-effect="chorus" data-value="0"></div>
+                            <div class="knob-value" id="chorus-value">0%</div>
+                            <input type="hidden" id="chorus-hidden-input" name="chorus" value="0">
+                        </div>
+                    </div>
+                    <div class="effect-control">
+                        <label for="phaser-knob">Phaser</label>
+                        <div class="knob-container">
+                            <div class="knob" id="phaser-knob" data-effect="phaser" data-value="0"></div>
+                            <div class="knob-value" id="phaser-value">0%</div>
+                            <input type="hidden" id="phaser-hidden-input" name="phaser" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DE TIEMPO Y ESPACIO -->
+                <div class="effects-section">
+                    <h2>Tiempo y Espacio</h2>
+                    <div class="effect-control">
+                        <label for="reverb-knob">Reverb</label>
+                        <div class="knob-container">
+                            <div class="knob" id="reverb-knob" data-effect="reverb" data-value="0"></div>
+                            <div class="knob-value" id="reverb-value">0%</div>
+                            <input type="hidden" id="reverb-hidden-input" name="reverb" value="0">
+                        </div>
+                    </div>
+                    <div class="effect-control">
+                        <label for="delay-knob">Delay</label>
+                        <div class="knob-container">
+                            <div class="knob" id="delay-knob" data-effect="delay" data-value="0"></div>
+                            <div class="knob-value" id="delay-value">0%</div>
+                            <input type="hidden" id="delay-hidden-input" name="delay" value="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN DE PITCH (Mantenemos Slider) -->
+                <div class="effects-section">
+                    <h2>Pitch</h2>
+                    <div class="effect-control">
+                        <label for="pitchshift">Pitch Shift (Semitonos)</label>
+                        <!-- Usamos el ID original para no romper el CSS si lo tenías -->
+                        <input type="range" id="pitchshift" name="pitchshift" min="-12" max="12" step="1" value="0"> 
+                        <!-- Podrías añadir un display para el valor si quieres: <span id="pitchshift-value">0</span> -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DE DINÁMICA -->
+                 <div class="effects-section">
+                    <h2>Dinámica</h2>
+                    <div class="effect-control">
+                        <label for="comp-knob">Compresor</label>
+                        <div class="knob-container">
+                            <div class="knob" id="comp-knob" data-effect="comp" data-value="0"></div>
+                            <div class="knob-value" id="comp-value">0%</div>
+                            <input type="hidden" id="comp-hidden-input" name="comp" value="0">
+                        </div>
+                    </div>
+                </div>
+                
                 <input type="submit" value="Procesar Pista" class="button"> <!-- Usamos tu clase .button -->
             </form>
         </div>
@@ -52,7 +141,7 @@
             document.getElementById('selected-track-display').textContent = 'Procesando: ' + filename;
             updateSelection();
         }
-
+        
         function updateSelection() {
             document.querySelectorAll('#raw-tracks-list li').forEach(item => {
                 // Usamos dataset para guardar el nombre y comparar de forma segura
@@ -64,7 +153,7 @@
             try {
                 const response = await fetch('/api/tracks'); // Usamos tu ruta API /api/tracks
                 const data = await response.json();
-
+                
                 // Actualizar Pistas Crudas
                 rawList.innerHTML = '';
                 if (data.raw_tracks.length > 0) {
@@ -76,23 +165,23 @@
                                 <audio controls onclick="event.stopPropagation();"><source src="/download/raw/${track}"></audio>
                                 <button class="delete-btn" onclick="deleteTrack('raw', '${track}', event)">&times;</button>
                             </li>`;
-                    });
-                } else {
+                        });
+                    } else {
                     rawList.innerHTML = '<li class="track-item">Sube una pista desde el celular...</li>';
                 }
-
+                
                 // Actualizar Pistas Procesadas
                 processedList.innerHTML = '';
                 if (data.processed_tracks.length > 0) {
                     data.processed_tracks.forEach(track => {
-                         // Creamos el HTML con tu clase .track-item
+                        // Creamos el HTML con tu clase .track-item
                         processedList.innerHTML += `
-                            <li class="track-item">
-                                <div class="file-name">${track}</div>
-                                <audio controls><source src="/download/fx/${track}"></audio>
-                                <button class="delete-btn" onclick="deleteTrack('fx', '${track}', event)">&times;</button>
+                        <li class="track-item">
+                            <div class="file-name">${track}</div>
+                            <audio controls><source src="/download/fx/${track}"></audio>
+                            <button class="delete-btn" onclick="deleteTrack('fx', '${track}', event)">&times;</button>
                             </li>`;
-                    });
+                        });
                 } else {
                     processedList.innerHTML = '<li class="track-item">Ninguna pista procesada.</li>';
                 }
@@ -119,14 +208,14 @@
         // Reemplaza el setInterval anterior por este bloque
         let isUserInteracting = false;
         let interactionTimeout = null;
-            
+        
         function markInteraction() {
             isUserInteracting = true;
             clearTimeout(interactionTimeout);
             // si no hay interacción en 12s, consideramos que dejó de interactuar
             interactionTimeout = setTimeout(() => { isUserInteracting = false; }, 12000);
         }
-        
+
         // detectar interacción en controles / click (pero ignorar clicks en botones de eliminar/descarga para no bloquearho innecesariamente)
         document.addEventListener('input', markInteraction, true);
         document.addEventListener('mousedown', (e) => {
@@ -134,7 +223,7 @@
             markInteraction();
         }, true);
         document.addEventListener('touchstart', markInteraction, true);
-        
+
         // función robusta que detecta si hay algún audio reproduciéndose
         function isAnyAudioPlaying() {
             const audios = document.querySelectorAll('audio');
@@ -158,7 +247,8 @@
         }, 8000);
 
         document.addEventListener('DOMContentLoaded', fetchAndUpdateAllTracks);
-    </script>
+        </script>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
 
